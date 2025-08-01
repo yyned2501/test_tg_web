@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -74,30 +35,23 @@
 </head>
 <body>
     <h1>Telegram 授权登录</h1>
-    <div id="telegram-login-container">
-        <!-- Telegram Login Widget 将在此处渲染 -->
-    </div>
+    <div id="telegram-login-container"></div>
     <div id="user-info"></div>
 
     <script>
-        // Telegram 登录回调函数
         window.onTelegramAuth = function(user) {
-            const userInfoDiv = document.getElementById('user-info');
-            userInfoDiv.innerHTML = `
+            document.getElementById('user-info').innerHTML = `
                 <p>登录成功！</p>
                 <p>ID: ${user.id}</p>
                 <p>用户名: ${user.username || '未设置'}</p>
                 <p>名字: ${user.first_name} ${user.last_name || ''}</p>
             `;
-
-            // 这里可以添加将用户信息发送到后端的代码
             console.log('用户数据:', user);
         };
 
-        // 动态加载 Telegram Login Widget 脚本
         const script = document.createElement('script');
         script.src = 'https://telegram.org/js/telegram-widget.js?22';
-        script.setAttribute('data-telegram-login', 'yyix_tgbot_bot'); // 替换为您的 Bot 用户名
+        script.setAttribute('data-telegram-login', '@yyix_tgbot_bot'); // 替换为你的 Bot 用户名
         script.setAttribute('data-size', 'large');
         script.setAttribute('data-onauth', 'onTelegramAuth(user)');
         script.setAttribute('data-request-access', 'write');
